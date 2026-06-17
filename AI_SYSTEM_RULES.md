@@ -43,16 +43,20 @@ AI必须优先读取
 
 命名规则：
 
-/docs/ROOT_MAP_*.md
+/docs/root/ROOT_MAP_*.md
 
 允许多个：
 
-✔ ROOT_MAP_1.md
-✔ ROOT_MAP_2.md
-✔ ROOT_MAP_admin.md
+✔ /docs/root/ROOT_MAP_1.md
+✔ /docs/root/ROOT_MAP_2.md
+✔ /docs/root/ROOT_MAP_admin.md
 
 规则：
 
+所有总目录文件必须统一放入 /docs/root/ 文件夹
+/docs/root/ 与 /docs/tree/ 同级，分别管理总目录和子目录
+/docs 根目录只保留 AI_SYSTEM_RULES.md、TODO.md 等少量入口说明文件
+禁止把 ROOT_MAP_*.md 直接堆放在 /docs 根目录，避免后续 ROOT_MAP_3、ROOT_MAP_4 等文件过多影响拖拽说明文件
 每个总目录必须 ≤ 300 行
 超过必须拆分成多个 ROOT_MAP
 每个 ROOT_MAP 覆盖一部分目录结构
@@ -140,6 +144,20 @@ ROOT_MAP 和 TREE_MAP 必须同时体现“文件夹”和“文件”
 说明必须标明修改影响范围，如按钮UI、交互逻辑、API调用、状态管理、数据处理
 禁止只列文件路径，禁止只列文件夹名，禁止没有说明的空目录结构
 
+职责唯一判定规则（强制）：
+
+每个文件必须且只能承担一个“业务职责”。
+
+判定标准：
+
+如果一个文件同时包含 UI + 业务逻辑 → ✘ 违反
+如果一个文件处理多个功能流程 → ✘ 违反
+如果一个文件需要用“和 / 或 / 以及”描述职责 → ✘ 违反
+
+修复方式：
+
+必须拆分为多个文件，每个文件只保留一个明确职责。
+
 格式示例：
 
 /src/components/buttons/ —— 按钮组件目录，集中管理可复用按钮UI（修改影响按钮视觉与交互）
@@ -149,6 +167,17 @@ ROOT_MAP 和 TREE_MAP 必须同时体现“文件夹”和“文件”
 /src/features/user/profile/saveProfile.ts —— 保存用户资料功能，只负责提交资料 API 调用
 
 AI修改规则：
+
+修改前强制检查（必须执行）：
+
+AI在修改任何代码前必须回答以下问题：
+
+1. 当前文件是否只承担一个职责？
+2. 是否存在多个不相关功能混合？
+3. 是否需要拆分后再修改？
+4. 修改是否会影响其他模块？
+
+如果任一答案为“是”，必须先拆分或调整结构，再进行修改。
 
 新增按钮时，优先新增独立按钮文件，并在目录系统中补充说明
 新增功能时，优先新增独立功能目录或模块文件，并在目录系统中补充说明
@@ -205,9 +234,9 @@ ROOT_MAP 超过 300 行
 
 规则：
 
-ROOT_MAP_1.md → 管理 src / components
-ROOT_MAP_2.md → 管理 services / utils
-ROOT_MAP_3.md → 管理 config / others
+/docs/root/ROOT_MAP_1.md → 管理 src / components
+/docs/root/ROOT_MAP_2.md → 管理 services / utils
+/docs/root/ROOT_MAP_3.md → 管理 config / others
 
 AI使用规则：
 
@@ -272,10 +301,25 @@ Step 1：
 读取 AI_SYSTEM_RULES.md
 
 Step 2：
-读取 ROOT_MAP_*
+读取 /docs/root/ROOT_MAP_*
+
+强制要求：
+必须先通过 ROOT_MAP 判断目标区域，禁止在读取 ROOT_MAP 前直接读取真实代码。
 
 Step 3：
 定位目标 TREE_MAP
+
+Step 3.5：
+变更影响分析（必须执行）
+
+在修改任何文件前，必须分析：
+
+本次修改会影响哪些文件？
+是否需要同步更新 ROOT_MAP？
+是否需要同步更新 TREE_MAP？
+是否会引入跨模块依赖变化？
+
+分析完成前禁止修改代码。
 
 Step 4：
 读取最少必要代码文件（1~3个）
