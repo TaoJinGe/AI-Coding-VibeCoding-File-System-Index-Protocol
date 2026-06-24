@@ -412,3 +412,146 @@ AI不是编辑器，是文件系统导航执行器
 ROOT_MAP = 一级磁盘索引
 TREE_MAP = 二级文件索引
 CODE = 实际执行层
+
+==================================================
+十三、功能链路索引协议（强制）
+
+除文件系统索引外，项目必须维护功能链路索引，用于记录用户动作、页面按钮、表单、链接、前端函数、API、后端处理、数据表、状态变化和关联功能之间的关系。
+
+功能链路索引统一放在 /docs 内：
+
+/docs/flow-root/FLOW_ROOT_MAP_*.md
+/docs/flow-tree/*.md
+
+【1. FLOW_ROOT_MAP】
+
+作用：
+用于快速定位某一类功能链路属于哪个 FLOW_TREE 文件。
+
+每个 FLOW_ROOT_MAP 必须 ≤ 300 行，超过必须拆分。
+
+每条记录必须包含：
+
+功能域
+功能范围说明
+对应 FLOW_TREE 文件
+主要入口页面
+高影响提示
+
+示例：
+
+用户认证链路 —— 登录、注册、退出、会话校验、登录态刷新。详见 /docs/flow-tree/auth.md（影响权限、用户状态、个人中心入口）
+钱包积分链路 —— 余额查询、积分扣除、充值订单、流水记录。详见 /docs/flow-tree/wallet.md（影响用户资产、扣费、订单）
+图片任务链路 —— 上传、生成、任务创建、历史记录、下载结果。详见 /docs/flow-tree/image-task.md（影响上传、任务、扣费、历史列表）
+
+【2. FLOW_TREE】
+
+作用：
+记录具体功能链路。
+
+每个 FLOW_TREE 必须 ≤ 300 行。
+每条功能链路必须拥有唯一 FLOW_ID。
+
+每条记录必须包含：
+
+FLOW_ID
+功能名称
+入口页面
+触发点
+前端文件
+前端函数或事件
+API/后端入口
+后端核心文件
+数据影响
+状态变化
+关联功能
+风险等级
+验证方式
+
+标准格式：
+
+FLOW_ID：IMAGE_TASK_CREATE_001
+功能名称：用户创建图片任务
+入口页面：/ai-image-studio/
+触发点：生成按钮
+前端文件：/local-workspace/user-frontend/xxx
+前端函数或事件：submit/generate/click handler
+API/后端入口：POST /api/image-tasks
+后端核心文件：/GoServe/internal/app/xxx.go
+数据影响：image_tasks、wallets、wallet_ledger_entries
+状态变化：创建任务、扣除 points、刷新历史任务
+关联功能：WALLET_DEDUCT_001、TASK_HISTORY_001、IMAGE_DOWNLOAD_001
+风险等级：高
+验证方式：点击生成后检查扣费、任务创建、历史列表、结果下载是否正常
+
+【3. ROOT_MAP / TREE_MAP 关联规则】
+
+ROOT_MAP / TREE_MAP 仍然只负责文件定位，不允许塞入完整功能链路。
+
+但涉及页面动作、按钮、表单、API、数据库、状态处理的文件，必须在说明末尾标注关联 FLOW_ID。
+
+示例：
+
+/static/js/upload.js —— 上传区交互脚本，负责上传按钮、进度提示和历史任务刷新（关联 FLOW_ID：IMAGE_UPLOAD_001、TASK_HISTORY_001）
+
+【4. 修改前强制规则】
+
+AI 修改任何页面、按钮、表单、链接、弹窗、上传、下载、登录、注册、保存、删除、后台操作、API、数据库、状态处理前，必须先读取：
+
+1. AI_SYSTEM_RULES.md
+2. 对应 ROOT_MAP / TREE_MAP
+3. 对应 FLOW_ROOT_MAP / FLOW_TREE
+
+修改前必须判断：
+
+本次修改涉及哪些 FLOW_ID？
+是否新增 FLOW_ID？
+是否影响已有链路？
+是否影响关联功能？
+是否影响前端入口、API、后端处理、数据表、状态变化、权限、跳转或公共区域？
+是否需要同步修改多个文件？
+需要同步更新哪些 ROOT_MAP、TREE_MAP、FLOW_ROOT_MAP、FLOW_TREE？
+
+未完成以上判断，禁止修改代码。
+
+【5. 修改后同步规则】
+
+只要发生以下任一情况，必须同步更新功能链路索引：
+
+新增页面动作
+新增按钮
+修改按钮行为
+新增或修改表单
+新增或修改链接跳转
+新增或修改 API
+新增或修改数据库影响
+新增或修改状态变化
+修改上传、下载、登录、注册、保存、删除、扣费、充值、后台操作
+改变功能之间的关联关系
+
+必须同步更新：
+
+对应 ROOT_MAP
+对应 TREE_MAP
+对应 FLOW_ROOT_MAP
+对应 FLOW_TREE
+
+【6. FLOW_ID 规则】
+
+FLOW_ID 使用大写英文 + 编号：
+
+AUTH_LOGIN_001
+AUTH_REGISTER_001
+PROFILE_SAVE_001
+WALLET_DEDUCT_001
+IMAGE_TASK_CREATE_001
+TASK_HISTORY_001
+ADMIN_USER_DELETE_001
+
+同一个 FLOW_ID 不得重复。
+
+功能废弃时不得删除记录，必须标记为：
+
+状态：已废弃
+替代 FLOW_ID：xxxx
+废弃原因：xxxx
